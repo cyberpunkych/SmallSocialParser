@@ -7,52 +7,58 @@ import requests
 
 api = InstagramAPI(client_id='4412fd0dc9f04234bc7ed93a85463502', client_secret='e155859592c84346ab775f4d0b0e000e')
 
-r=requests.get("https://instagram.com/"+str(sys.argv[1])+"/")
+
+
+
+r=requests.post("http://www.otzberg.net/iguserid/index.php", data={"q":str(sys.argv[1]), "mode":"getid"})
 html=r.text
 
-user_id = int(re.findall('<meta property="og:image" content="([^>]+)" />', html)[0].split('_')[1])
-photos_len = re.findall('"count":([^.]+),"page', html)
-
 print "======================="
+
+try:
+	user_id = int(re.findall('<h4>([^>]+)</h4>', html)[1].split(' ')[2])
+
+	r1=requests.get("https://instagram.com/"+sys.argv[1]+"/")
+	photos_len = re.findall('"count":([^.]+),"page', r1.text)
+except Exception, e:
+	print "Bad username! Exit..."
+	print "======================="   	
+	exit()
+
+
+
+
+
 print "User id: "+str(user_id)
-print "Count media: "+str(photos_len[0])
+try:
+	print "Count media: "+str(photos_len[0])
+except Exception:
+	print "Profile is privat!"
+	print "======================="
+	exit()
 
-
-recent_media = api.user_recent_media(user_id=str(user_id), count=33)
-
+recent_media = api.user_recent_media(user_id=str(user_id))
 count_media=len(recent_media[0])
 
-while count_media<=photos_len:
-	try:
-		#print count_media
-		for i in recent_media[0]:
-			try:
-				if i.location:
-					print i.link
-					print i.location
-			except Exception:
-				pass
-		last_id=recent_media[0][len(recent_media[0])-1]
-		last_id=last_id.caption.id+"_"+last_id.caption.user.id
-		recent_media = api.user_recent_media(user_id=str(user_id), count=33, min_id=last_id)
-		count_media = count_media + len(recent_media[0])
-	except Exception:
-		pass
+last_id=0
 
-
-#recent_media = api.user_recent_media(user_id=str(user_id), count=int(sys.argv[2]))
-
-def get_media(medias):
-	for i in medias[0]:
-		#print i #debug
+while count_media<int(photos_len[0]):
+	for i in recent_media[0]:
 		try:
 			if i.location:
+				pass
 				print "======================="
 				print i.link
 				print i.location
-				
+				print i.caption
 		except Exception:
 			pass
-		print "======================="   	
 
-#print api.media(media_id=str(sys.argv[1])).location
+	if recent_media[0] == []:
+		pass
+	else:
+		last_id=str(recent_media[0][-1]).split(' ')[1]
+		recent_media = api.user_recent_media(user_id=str(user_id), max_id=last_id)
+		count_media = count_media + len(recent_media[0])
+
+print "======================="
