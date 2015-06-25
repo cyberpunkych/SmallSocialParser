@@ -12,33 +12,22 @@ import urllib
 
 api = InstagramAPI(client_id='4412fd0dc9f04234bc7ed93a85463502', client_secret='e155859592c84346ab775f4d0b0e000e')
 
-map_html=u"""
+map_html="""
 <!DOCTYPE html>
-<html>
-    <head>
-        <title></title>
-        <script src="http://api-maps.yandex.ru/1.1/index.xml" type="text/javascript"></script>
-    </head>
-    <body>            
-            <div id="YMapsID" style="position: fixed;top: 0;left: 0;width: 100%;height: 100%;"></div>
-            <script type="text/javascript">
-  YMaps.jQuery(function () {
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script src="http://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
+    <script type="text/javascript">
+        ymaps.ready(init);
+        var myMap, 
+            myPlacemark;
 
-        var map = new YMaps.Map(YMaps.jQuery("#YMapsID")[0]);
-            
-
-
-
-
-
-map.addControl(new YMaps.TypeControl());
-map.addControl(new YMaps.ToolBar());
-map.addControl(new YMaps.Zoom());
-map.addControl(new YMaps.MiniMap());
-map.addControl(new YMaps.ScaleLine());
-
- map.setCenter(new YMaps.GeoPoint(37.64, 55.76), 3);
-
+        function init(){ 
+            myMap = new ymaps.Map("map", {
+                center: [55.76, 37.64],
+                zoom: 5
+            }); 
 """
 
 
@@ -73,6 +62,7 @@ recent_media = api.user_recent_media(user_id=str(user_id))
 count_media=len(recent_media[0])
 
 last_id=0
+map_html1=""
 
 while count_media<int(photos_len[0]):
 	for i in recent_media[0]:
@@ -82,16 +72,14 @@ while count_media<int(photos_len[0]):
 				print "======================="
 				print i.link
 				print i.location
-#				print i.caption
-				
+
+				map_html1+=u"myPlacemark = new ymaps.Placemark(["+str(i.location.point.latitude)+", "+str(i.location.point.longitude)+"], {\n"
 				
 				if i.location.id=='0':
-					map_html+=u"var placemark = new YMaps.Placemark(new YMaps.GeoPoint("+str(i.location.point.longitude)+", "+str(i.location.point.latitude)+"), {style: \"default#greenPoint\"}, {hideIcon: false});\n"
+					map_html1+=u" hintContent: ' ',\n balloonContent: decodeURIComponent('<a target=\"_blank\" href=\"{}\">{}</a><br><img src=\"{}\">') }}, {{ preset: 'islands#dotIcon' }} );\n myMap.geoObjects.add(myPlacemark);\n\n".format(i.link, i.link, i.images["low_resolution"].url)	
 				else:
-					map_html+=u"var placemark = new YMaps.Placemark(new YMaps.GeoPoint("+str(i.location.point.longitude)+", "+str(i.location.point.latitude)+"), {hideIcon: false});\n"
-				
-				map_html+=u"placemark.name = \"<a target='_blank' href='{}'>{}</a>\";\n placemark.description = decodeURIComponent('<img src=\"{}\">');\n map.addOverlay(placemark);\n\n".format(i.link, i.link, i.images["low_resolution"].url)
-				 
+					map_html1+=u" hintContent: ' ',\n balloonContent: decodeURIComponent('<a target=\"_blank\" href=\"{}\">{}</a><br><img src=\"{}\">') }} );\n myMap.geoObjects.add(myPlacemark);\n\n".format(i.link, i.link, i.images["low_resolution"].url)	
+
 
 
 		except Exception as error:
@@ -106,26 +94,26 @@ while count_media<int(photos_len[0]):
 		count_media = count_media + len(recent_media[0])
 
 
-map_html+=u"""
+map_html+=map_html1
+
+map_html+="""
 
 
 
 
+  }
+    </script>
+</head>
 
-    })
+<body>
+    <div id="map" style="width: 600px; height: 400px"></div>
+</body>
 
-            </script>
-        </div>
-    </body>
 </html>
 """
 
-file_name=sys.argv[1]+'_'+str(date.today().year)+'_'+str(date.today().month)+'_'+str(date.today().day)+'.html'
-map_file=codecs.open(file_name, 'w', "utf-16")
+map_file=codecs.open(sys.argv[1]+'_'+str(date.today().year)+'_'+str(date.today().month)+'_'+str(date.today().day)+'.html', 'w', "utf-8")
 map_file.write(map_html)
 map_file.close
 
-
-print "\n======================="
-print "Open "+sys.argv[1]+'_'+str(date.today().year)+'_'+str(date.today().month)+'_'+str(date.today().day)+'.html'+" in your browser"
 print "======================="
