@@ -10,7 +10,7 @@ import codecs
 import urllib
 
 
-api = InstagramAPI(client_id='4412fd0dc9f04234bc7ed93a85463502', client_secret='e155859592c84346ab775f4d0b0e000e')
+api = InstagramAPI(client_id='', client_secret='')
 
 map_html="""
 <!DOCTYPE html>
